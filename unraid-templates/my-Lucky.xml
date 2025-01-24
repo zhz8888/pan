@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <Container version="2">
   <Name>Lucky</Name>
-  <Repository>gdy666/lucky</Repository>
+  <Repository>zhz1021/lucky</Repository>
   <Registry/>
   <Network>host</Network>
   <MyIP/>
-  <Shell>sh</Shell>
+  <Shell>bash</Shell>
   <Privileged>true</Privileged>
   <Support/>
   <Project/>
