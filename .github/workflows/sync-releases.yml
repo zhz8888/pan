@@ -1,0 +1,248 @@
+name: Sync Armbian Releases
+
+on:
+  schedule:
+    - cron: '0 0 10 * *'  # 每月10号UTC时间午夜执行
+  workflow_dispatch:  # 手动触发选项
+
+permissions:
+  contents: write
+
+jobs:
+  sync_rock-3c:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info from armbian/community
+        id: get_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("Rock-3c")) | .browser_download_url' | tr '\n' ';')
+          echo "::set-output name=assets::$ASSETS"
+      
+      - name: Download Rock-3c files
+        run: |
+          ASSETS="${{ steps.get_release.outputs.assets }}"
+          IFS=';'
+          for FILE_URL in $ASSETS; do
+            wget --content-disposition "$FILE_URL"
+          done
+      
+      - name: Get Radxa-ROCK-3C-Armbian release ID and delete all files
+        id: get_radxa_release_id
+        run: |
+          # 直接从指定的release中获取所有assets的ID
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/Radxa-ROCK-3C-Armbian | jq -r '.assets[].id')
+
+          # 如果没有找到任何assets，提前结束
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release Radxa-ROCK-3C-Armbian."
+            exit 1
+          fi
+
+          # 循环删除所有assets
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+      
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: root
+            - Default password: 1234
+            - Install command: armbian-install
+            - Update command: armbian-update
+            ## Armbian Image Verification
+            - sha256sum
+            Download from https://github.com/armbian/community/releases
+          EOF
+      
+      - name: Upload downloaded files to Radxa-ROCK-3C-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: Radxa-ROCK-3C-Armbian
+          files: '*Rock-3c*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_orangepi-3b:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info from armbian/community
+        id: get_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("Orangepi3b")) | .browser_download_url' | tr '\n' ';')
+          echo "::set-output name=assets::$ASSETS"
+      
+      - name: Download Orangepi3b files
+        run: |
+          ASSETS="${{ steps.get_release.outputs.assets }}"
+          IFS=';'
+          for FILE_URL in $ASSETS; do
+            wget --content-disposition "$FILE_URL"
+          done
+      
+      - name: Get OrangePi-3B-Armbian release ID and delete all files
+        id: get_orangepi_release_id
+        run: |
+          # 直接从指定的release中获取所有assets的ID
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/OrangePi-3B-Armbian | jq -r '.assets[].id')
+
+          # 如果没有找到任何assets，提前结束
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release OrangePi-3B-Armbian."
+            exit 1
+          fi
+
+          # 循环删除所有assets
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: root
+            - Default password: 1234
+            - Install command: armbian-install
+            - Update command: armbian-update
+            ## Armbian Image Verification
+            - sha256sum
+            Download from https://github.com/armbian/community/releases
+          EOF
+
+      - name: Upload downloaded files to OrangePi-3B-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: OrangePi-3B-Armbian
+          files: '*Orangepi3b*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_emb3531:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info from ophub/amlogic-s9xxx-armbian
+        id: get_latest_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/ophub/amlogic-s9xxx-armbian/releases/latest)
+          TAG_NAME=$(echo $RELEASE_INFO | jq -r '.tag_name')
+          echo "::set-output name=tag_name::$TAG_NAME"
+      
+      - name: Extract release date from tag_name
+        id: extract_date
+        run: |
+          TAG_NAME="${{ steps.get_latest_release.outputs.tag_name }}"
+          RELEASE_DATE=$(echo $TAG_NAME | grep -oP '\d{4}\.\d{2}')
+          echo "::set-output name=release_date::$RELEASE_DATE"
+
+      - name: Download files from specified releases
+        id: download_files
+        run: |
+          RELEASE_DATE="${{ steps.extract_date.outputs.release_date }}"
+          BASE_URL="https://api.github.com/repos/ophub/amlogic-s9xxx-armbian/releases/tags/"
+          
+          # RELEASE_TAGS=("Armbian_noble_save_$RELEASE_DATE" "Armbian_jammy_save_$RELEASE_DATE" "Armbian_bullseye_save_$RELEASE_DATE" "Armbian_bookworm_save_$RELEASE_DATE" "Armbian_HassIoSupervisor_bookworm_save_$RELEASE_DATE")
+          RELEASE_TAGS=("Armbian_noble_save_$RELEASE_DATE" "Armbian_jammy_save_$RELEASE_DATE" "Armbian_bullseye_save_$RELEASE_DATE" "Armbian_bookworm_save_$RELEASE_DATE")
+          
+          for TAG in "${RELEASE_TAGS[@]}"; do
+            RELEASE_INFO=$(curl -s "$BASE_URL$TAG")
+            ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("emb3531")) | .browser_download_url')
+            for FILE_URL in $ASSETS; do
+              wget --content-disposition "$FILE_URL"
+            done
+          done
+
+      - name: Get EMB-3531-Armbian release ID and delete all files
+        id: get_emb_release_id
+        run: |
+          # 直接从指定的release中获取所有assets的ID
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/EMB-3531-Armbian | jq -r '.assets[].id')
+
+          # 如果没有找到任何assets，提前结束
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release EMB-3531-Armbian."
+            exit 1
+          fi
+
+          # 循环删除所有assets
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: root
+            - Default password: 1234
+            - Install command: armbian-install
+            - Update command: armbian-update
+            ## Armbian Image Verification
+            - sha256sum
+            Download from https://github.com/ophub/amlogic-s9xxx-armbian/releases
+          EOF
+
+      - name: Upload downloaded files to EMB-3531-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: EMB-3531-Armbian
+          files: '*emb3531*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
