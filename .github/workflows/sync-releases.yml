@@ -67,8 +67,10 @@ jobs:
             - Default password: 1234
             - Install command: armbian-install
             - Update command: armbian-update
+            
             ## Armbian Image Verification
             - sha256sum
+
             Download from https://github.com/armbian/community/releases
           EOF
       
@@ -141,8 +143,10 @@ jobs:
             - Default password: 1234
             - Install command: armbian-install
             - Update command: armbian-update
+
             ## Armbian Image Verification
             - sha256sum
+
             Download from https://github.com/armbian/community/releases
           EOF
 
@@ -231,8 +235,10 @@ jobs:
             - Default password: 1234
             - Install command: armbian-install
             - Update command: armbian-update
+
             ## Armbian Image Verification
             - sha256sum
+
             Download from https://github.com/ophub/amlogic-s9xxx-armbian/releases
           EOF
 
