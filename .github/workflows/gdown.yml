@@ -1,0 +1,69 @@
+name: Download and Upload to Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      googleDriveUrl:
+        description: 'Google Drive URL'
+        required: true
+      expectedMd5:
+        description: 'Expected MD5 checksum of the file'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  download-upload:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+      
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.12'
+        
+    - name: Install dependencies
+      run: |
+        pip install gdown
+        sudo apt-get install -y p7zip p7zip-full
+        
+    - name: Download file from Google Drive
+      run: |
+        FILE_URL=${{ github.event.inputs.googleDriveUrl }}
+        mkdir -p ${{ github.workspace }}/gdown-files
+        gdown -O ${{ github.workspace }}/gdown-files "$FILE_URL"
+        
+    - name: Calculate MD5 checksum of downloaded file
+      run: |
+        EXPECTED_MD5=${{ github.event.inputs.expectedMd5 }}
+        DOWNLOADED_FILES=${{ github.workspace }}/gdown-files/*
+        ACTUAL_MD5=$(md5sum "$DOWNLOADED_FILES" | awk '{ print $1 }')
+        if [ "$EXPECTED_MD5" == "" ]; then
+            echo "Expected MD5 checksum not provided. Skipping MD5 checksum verification."
+            exit 0
+        else
+            echo "Expected MD5: $EXPECTED_MD5"
+            echo "Actual MD5: $ACTUAL_MD5"
+            if [ "$EXPECTED_MD5" != "$ACTUAL_MD5" ]; then
+            echo "MD5 checksum does not match! Aborting..."
+            exit 1
+            fi
+        fi
+
+    - name: Volume comperss downloaded file
+      run: |
+        python zip-script.py
+        
+    - name: Upload file to Release
+      uses: softprops/action-gh-release@v2.2.1
+      with:
+        files: ${{ github.workspace }}/upload-files/*
+        name: GDown $(date +%Y-%m-%d %H:%M:%S)
+        tag_name: GDown
+        make_latest: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
