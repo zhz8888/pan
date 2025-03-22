@@ -330,7 +330,7 @@ jobs:
           ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Onecloud_")) | .browser_download_url' | tr '\n' ';')
           echo "::set-output name=assets::$ASSETS"
       
-      - name: Download Onecloud files
+      - name: Download OneCloud files
         run: |
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
@@ -338,13 +338,13 @@ jobs:
             wget --content-disposition "$FILE_URL"
           done
       
-      - name: Get Onecloud-Armbian release ID and delete all files
+      - name: Get OneCloud-Armbian release ID and delete all files
         id: get_orangepi_release_id
         run: |
-          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/Onecloud-Armbian | jq -r '.assets[].id')
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/OneCloud-Armbian | jq -r '.assets[].id')
 
           if [ -z "$ASSETS" ]; then
-            echo "No assets found for release Onecloud-Armbian."
+            echo "No assets found for release OneCloud-Armbian."
             exit 1
           fi
 
@@ -379,7 +379,7 @@ jobs:
             Download from https://github.com/armbian/community/releases
           EOF
 
-      - name: Upload downloaded files to Onecloud-Armbian release
+      - name: Upload downloaded files to OneCloud-Armbian release
         uses: softprops/action-gh-release@v2.2.1
         with:
           tag_name: OneCloud-Armbian
