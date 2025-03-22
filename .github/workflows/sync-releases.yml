@@ -3,7 +3,7 @@ name: Sync Armbian Releases
 on:
   schedule:
     - cron: '0 0 10 * *'  # 每月10号UTC时间午夜执行
-  workflow_dispatch:  # 手动触发选项
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,10 +19,10 @@ jobs:
         id: get_release
         run: |
           RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
-          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("Rock-3c")) | .browser_download_url' | tr '\n' ';')
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Rock-3c_")) | .browser_download_url' | tr '\n' ';')
           echo "::set-output name=assets::$ASSETS"
       
-      - name: Download Rock-3c files
+      - name: Download Rock-3C files
         run: |
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
@@ -33,16 +33,13 @@ jobs:
       - name: Get Radxa-ROCK-3C-Armbian release ID and delete all files
         id: get_radxa_release_id
         run: |
-          # 直接从指定的release中获取所有assets的ID
           ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/Radxa-ROCK-3C-Armbian | jq -r '.assets[].id')
 
-          # 如果没有找到任何assets，提前结束
           if [ -z "$ASSETS" ]; then
             echo "No assets found for release Radxa-ROCK-3C-Armbian."
             exit 1
           fi
 
-          # 循环删除所有assets
           for ASSET_ID in $ASSETS; do
             RESPONSE=$(curl -L \
               -X DELETE \
@@ -95,10 +92,10 @@ jobs:
         id: get_release
         run: |
           RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
-          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("Orangepi3b")) | .browser_download_url' | tr '\n' ';')
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Orangepi3b_")) | .browser_download_url' | tr '\n' ';')
           echo "::set-output name=assets::$ASSETS"
       
-      - name: Download Orangepi3b files
+      - name: Download OrangePi-3B files
         run: |
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
@@ -109,16 +106,13 @@ jobs:
       - name: Get OrangePi-3B-Armbian release ID and delete all files
         id: get_orangepi_release_id
         run: |
-          # 直接从指定的release中获取所有assets的ID
           ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/OrangePi-3B-Armbian | jq -r '.assets[].id')
 
-          # 如果没有找到任何assets，提前结束
           if [ -z "$ASSETS" ]; then
             echo "No assets found for release OrangePi-3B-Armbian."
             exit 1
           fi
 
-          # 循环删除所有assets
           for ASSET_ID in $ASSETS; do
             RESPONSE=$(curl -L \
               -X DELETE \
@@ -161,7 +155,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  sync_emb3531:
+  sync_emb-3531:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -201,16 +195,13 @@ jobs:
       - name: Get EMB-3531-Armbian release ID and delete all files
         id: get_emb_release_id
         run: |
-          # 直接从指定的release中获取所有assets的ID
           ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/EMB-3531-Armbian | jq -r '.assets[].id')
 
-          # 如果没有找到任何assets，提前结束
           if [ -z "$ASSETS" ]; then
             echo "No assets found for release EMB-3531-Armbian."
             exit 1
           fi
 
-          # 循环删除所有assets
           for ASSET_ID in $ASSETS; do
             RESPONSE=$(curl -L \
               -X DELETE \
@@ -247,6 +238,444 @@ jobs:
         with:
           tag_name: EMB-3531-Armbian
           files: '*emb3531*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_orangepi-zero:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info from armbian/community
+        id: get_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Orangepizero_")) | .browser_download_url' | tr '\n' ';')
+          echo "::set-output name=assets::$ASSETS"
+      
+      - name: Download OrangePi-Zero files
+        run: |
+          ASSETS="${{ steps.get_release.outputs.assets }}"
+          IFS=';'
+          for FILE_URL in $ASSETS; do
+            wget --content-disposition "$FILE_URL"
+          done
+      
+      - name: Get OrangePi-Zero-Armbian release ID and delete all files
+        id: get_orangepi_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/OrangePi-Zero-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release OrangePi-Zero-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: root
+            - Default password: 1234
+            - Install command: armbian-install
+            - Update command: armbian-update
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from https://github.com/armbian/community/releases
+          EOF
+
+      - name: Upload downloaded files to OrangePi-Zero-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: OrangePi-Zero-Armbian
+          files: '*Orangepizero*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_onecloud:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info from armbian/community
+        id: get_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Onecloud_")) | .browser_download_url' | tr '\n' ';')
+          echo "::set-output name=assets::$ASSETS"
+      
+      - name: Download Onecloud files
+        run: |
+          ASSETS="${{ steps.get_release.outputs.assets }}"
+          IFS=';'
+          for FILE_URL in $ASSETS; do
+            wget --content-disposition "$FILE_URL"
+          done
+      
+      - name: Get Onecloud-Armbian release ID and delete all files
+        id: get_orangepi_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/Onecloud-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release Onecloud-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: root
+            - Default password: 1234
+            - Install command: armbian-install
+            - Update command: armbian-update
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from https://github.com/armbian/community/releases
+          EOF
+
+      - name: Upload downloaded files to Onecloud-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: OneCloud-Armbian
+          files: '*Onecloud*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_nanopc-t4:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info from armbian/community
+        id: get_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Nanopct4_")) | .browser_download_url' | tr '\n' ';')
+          echo "::set-output name=assets::$ASSETS"
+      
+      - name: Download NanoPC-T4 files
+        run: |
+          ASSETS="${{ steps.get_release.outputs.assets }}"
+          IFS=';'
+          for FILE_URL in $ASSETS; do
+            wget --content-disposition "$FILE_URL"
+          done
+      
+      - name: Get NanoPC-T4-Armbian release ID and delete all files
+        id: get_orangepi_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/NanoPC-T4-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release NanoPC-T4-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: root
+            - Default password: 1234
+            - Install command: armbian-install
+            - Update command: armbian-update
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from https://github.com/armbian/community/releases
+          EOF
+
+      - name: Upload downloaded files to NanoPC-T4-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: NanoPC-T4-Armbian
+          files: '*Nanopct4*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_radxa-cubie-a5e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info from armbian/community
+        id: get_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Radxa-cubie-a5e_")) | .browser_download_url' | tr '\n' ';')
+          echo "::set-output name=assets::$ASSETS"
+      
+      - name: Download Radxa-Cubie-A5E files
+        run: |
+          ASSETS="${{ steps.get_release.outputs.assets }}"
+          IFS=';'
+          for FILE_URL in $ASSETS; do
+            wget --content-disposition "$FILE_URL"
+          done
+      
+      - name: Get Radxa-Cubie-A5E-Armbian release ID and delete all files
+        id: get_orangepi_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/Radxa-Cubie-A5E-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release Radxa-Cubie-A5E-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: root
+            - Default password: 1234
+            - Install command: armbian-install
+            - Update command: armbian-update
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from https://github.com/armbian/community/releases
+          EOF
+
+      - name: Upload downloaded files to Radxa-Cubie-A5E-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: Radxa-Cubie-A5E-Armbian
+          files: '*Radxa-cubie-a5e*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_nanopi-neo4:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info from armbian/community
+        id: get_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Nanopineo4_")) | .browser_download_url' | tr '\n' ';')
+          echo "::set-output name=assets::$ASSETS"
+      
+      - name: Download NanoPi-NEO4 files
+        run: |
+          ASSETS="${{ steps.get_release.outputs.assets }}"
+          IFS=';'
+          for FILE_URL in $ASSETS; do
+            wget --content-disposition "$FILE_URL"
+          done
+      
+      - name: Get NanoPi-NEO4-Armbian release ID and delete all files
+        id: get_orangepi_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/NanoPi-NEO4-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release NanoPi-NEO4-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: root
+            - Default password: 1234
+            - Install command: armbian-install
+            - Update command: armbian-update
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from https://github.com/armbian/community/releases
+          EOF
+
+      - name: Upload downloaded files to NanoPi-NEO4-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: NanoPi-NEO4-Armbian
+          files: '*Nanopineo4*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_nanopi-m4:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info from armbian/community
+        id: get_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Nanopim4_")) | .browser_download_url' | tr '\n' ';')
+          echo "::set-output name=assets::$ASSETS"
+      
+      - name: Download NanoPi-M4 files
+        run: |
+          ASSETS="${{ steps.get_release.outputs.assets }}"
+          IFS=';'
+          for FILE_URL in $ASSETS; do
+            wget --content-disposition "$FILE_URL"
+          done
+      
+      - name: Get NanoPi-M4-Armbian release ID and delete all files
+        id: get_orangepi_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/NanoPi-M4-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release NanoPi-M4-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: root
+            - Default password: 1234
+            - Install command: armbian-install
+            - Update command: armbian-update
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from https://github.com/armbian/community/releases
+          EOF
+
+      - name: Upload downloaded files to NanoPi-M4-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: NanoPi-M4-Armbian
+          files: '*Nanopim4*'
           body_path: Release.md
           make_latest: false
           token: ${{ secrets.GITHUB_TOKEN }}
