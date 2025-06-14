@@ -858,7 +858,7 @@ jobs:
           https://dl.armbian.com/orangepione/Trixie_current_minimal"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --bt-save-metadata-only=true "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
           done
       
       - name: Get OrangePi-One-Armbian release ID and delete all files
