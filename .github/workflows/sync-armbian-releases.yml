@@ -27,7 +27,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c "$FILE_URL"
+            wget -q "$FILE_URL"
           done
       
       - name: Get Radxa-ROCK-3C-Armbian release ID and delete all files
@@ -100,7 +100,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c "$FILE_URL"
+            wget -q "$FILE_URL"
           done
       
       - name: Get OrangePi-3B-Armbian release ID and delete all files
@@ -188,7 +188,7 @@ jobs:
             RELEASE_INFO=$(curl -s "$BASE_URL$TAG")
             ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("emb3531")) | .browser_download_url')
             for FILE_URL in $ASSETS; do
-              aria2c "$FILE_URL"
+              wget -q "$FILE_URL"
             done
           done
 
@@ -262,7 +262,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c "$FILE_URL"
+            wget -q "$FILE_URL"
           done
       
       - name: Get OrangePi-Zero-Armbian release ID and delete all files
@@ -335,7 +335,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c "$FILE_URL"
+            wget -q "$FILE_URL"
           done
       
       - name: Get OneCloud-Armbian release ID and delete all files
@@ -408,7 +408,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c "$FILE_URL"
+            wget -q "$FILE_URL"
           done
       
       - name: Get NanoPC-T4-Armbian release ID and delete all files
@@ -481,7 +481,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c "$FILE_URL"
+            wget -q "$FILE_URL"
           done
       
       - name: Get Radxa-Cubie-A5E-Armbian release ID and delete all files
@@ -554,7 +554,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c "$FILE_URL"
+            wget -q "$FILE_URL"
           done
       
       - name: Get NanoPi-NEO4-Armbian release ID and delete all files
@@ -627,7 +627,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c "$FILE_URL"
+            wget -q "$FILE_URL"
           done
       
       - name: Get NanoPi-M4-Armbian release ID and delete all files
@@ -700,7 +700,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c "$FILE_URL"
+            wget -q "$FILE_URL"
           done
       
       - name: Get OrangePi-Zero3-Armbian release ID and delete all files
@@ -773,7 +773,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c "$FILE_URL"
+            wget -q "$FILE_URL"
           done
       
       - name: Get NanoPi-K2-Armbian release ID and delete all files
