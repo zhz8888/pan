@@ -827,3 +827,88 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_orangepi-one:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download OrangePi-One files
+        run: |
+          ASSETS="https://dl.armbian.com/orangepione/Bookworm_current_xfce.torrent;\
+          https://dl.armbian.com/orangepione/Bookworm_current_xfce.sha;\
+          https://dl.armbian.com/orangepione/Bookworm_current_xfce.asc;\
+          https://dl.armbian.com/orangepione/Bookworm_current_xfce;\
+          https://dl.armbian.com/orangepione/Noble_current_xfce.torrent;\
+          https://dl.armbian.com/orangepione/Noble_current_xfce.sha;\
+          https://dl.armbian.com/orangepione/Noble_current_xfce.asc;\
+          https://dl.armbian.com/orangepione/Noble_current_xfce;\
+          https://dl.armbian.com/orangepione/Bookworm_current_minimal.torrent;\
+          https://dl.armbian.com/orangepione/Bookworm_current_minimal.sha;\
+          https://dl.armbian.com/orangepione/Bookworm_current_minimal.asc;\
+          https://dl.armbian.com/orangepione/Bookworm_current_minimal;\
+          https://dl.armbian.com/orangepione/Noble_current_minimal.torrent;\
+          https://dl.armbian.com/orangepione/Noble_current_minimal.sha;\
+          https://dl.armbian.com/orangepione/Noble_current_minimal.asc;\
+          https://dl.armbian.com/orangepione/Noble_current_minimal;\
+          https://dl.armbian.com/orangepione/Trixie_current_minimal.torrent;\
+          https://dl.armbian.com/orangepione/Trixie_current_minimal.sha;\
+          https://dl.armbian.com/orangepione/Trixie_current_minimal.asc;\
+          https://dl.armbian.com/orangepione/Trixie_current_minimal"
+          IFS=';'
+          for FILE_URL in $ASSETS; do
+            wget -q "$FILE_URL"
+          done
+      
+      - name: Get OrangePi-One-Armbian release ID and delete all files
+        id: get_orangepi_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/OrangePi-One-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release OrangePi-One-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: \`root\`
+            - Default password: \`1234\`
+            - Install command: \`armbian-install\`
+            - Update command: \`armbian-update\`
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from Download from https://www.armbian.com/orange-pi-one
+          EOF
+
+      - name: Upload downloaded files to OrangePi-One-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: OrangePi-One-Armbian
+          files: '*Orangepione*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
