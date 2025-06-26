@@ -900,3 +900,76 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_orangepi-zero2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get latest release info from armbian/community
+        id: get_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Orangepizero2_")) | .browser_download_url' | tr '\n' ';')
+          echo "::set-output name=assets::$ASSETS"
+      
+      - name: Download OrangePi-Zero2 files
+        run: |
+          ASSETS="${{ steps.get_release.outputs.assets }}"
+          IFS=';'
+          for FILE_URL in $ASSETS; do
+            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+          done
+      
+      - name: Get OrangePi-Zero2-Armbian release ID and delete all files
+        id: get_orangepi_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/OrangePi-Zero2-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release OrangePi-Zero2-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: \`root\`
+            - Default password: \`1234\`
+            - Install command: \`armbian-install\`
+            - Update command: \`armbian-update\`
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from https://github.com/armbian/community/releases
+          EOF
+
+      - name: Upload downloaded files to OrangePi-Zero2-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: OrangePi-Zero2-Armbian
+          files: '*Orangepizero2*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
