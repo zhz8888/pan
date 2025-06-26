@@ -834,9 +834,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
+      - name: Get latest release info from armbian/os
+        id: get_release
+        run: |
+          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/os/releases/latest)
+          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Orangepione_")) | .browser_download_url' | tr '\n' ';')
+          echo "::set-output name=assets::$ASSETS"
+      
       - name: Download OrangePi-One files
         run: |
-          ASSETS="https://dl.armbian.com/orangepione/Bookworm_current_xfce.torrent;https://dl.armbian.com/orangepione/Bookworm_current_xfce.sha;https://dl.armbian.com/orangepione/Bookworm_current_xfce.asc;https://dl.armbian.com/orangepione/Bookworm_current_xfce;https://dl.armbian.com/orangepione/Noble_current_xfce.torrent;https://dl.armbian.com/orangepione/Noble_current_xfce.sha;https://dl.armbian.com/orangepione/Noble_current_xfce.asc;https://dl.armbian.com/orangepione/Noble_current_xfce;https://dl.armbian.com/orangepione/Bookworm_current_minimal.torrent;https://dl.armbian.com/orangepione/Bookworm_current_minimal.sha;https://dl.armbian.com/orangepione/Bookworm_current_minimal.asc;https://dl.armbian.com/orangepione/Bookworm_current_minimal;https://dl.armbian.com/orangepione/Noble_current_minimal.torrent;https://dl.armbian.com/orangepione/Noble_current_minimal.sha;https://dl.armbian.com/orangepione/Noble_current_minimal.asc;https://dl.armbian.com/orangepione/Noble_current_minimal;https://dl.armbian.com/orangepione/Trixie_current_minimal.torrent;https://dl.armbian.com/orangepione/Trixie_current_minimal.sha;https://dl.armbian.com/orangepione/Trixie_current_minimal.asc;https://dl.armbian.com/orangepione/Trixie_current_minimal;"
+          ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
             aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
@@ -880,7 +887,7 @@ jobs:
             ## Armbian Image Verification
             - sha256sum
 
-            Download from Download from https://www.armbian.com/orange-pi-one
+            Download from https://github.com/armbian/os/releases
           EOF
 
       - name: Upload downloaded files to OrangePi-One-Armbian release
