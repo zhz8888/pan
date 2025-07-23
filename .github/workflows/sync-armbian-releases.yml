@@ -164,7 +164,13 @@ jobs:
       - name: Get all tags from ophub/amlogic-s9xxx-armbian
         id: get_all_tags
         run: |
-          ALL_TAGS=$(curl -s https://api.github.com/repos/ophub/amlogic-s9xxx-armbian/tags | jq -r '.[] | select(contains("save_"))' | sort -r)
+          ALL_TAGS=$(curl -s https://api.github.com/repos/ophub/amlogic-s9xxx-armbian/tags | jq -r '.[] | .name' | grep 'save_' | sort -r)
+          
+          if [ -z "$ALL_TAGS" ]; then
+            echo "No tags containing 'save_' found"
+            exit 1
+          fi
+
           echo "::set-output name=all_tags::$ALL_TAGS"
       
       - name: Extract latest release date from tags
