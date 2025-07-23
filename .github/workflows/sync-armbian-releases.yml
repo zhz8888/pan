@@ -175,12 +175,12 @@ jobs:
           RELEASE_DATE=$(echo "$LATEST_TAG" | grep -oP 'save_\K\d{4}\.\d{2}')
           echo "::set-output name=release_date::$RELEASE_DATE"
 
-      - name: Download files from specified releases
-        id: download_files
+      - name: Generate download URLs
+        id: generate_urls
         run: |
           RELEASE_DATE="${{ steps.extract_date.outputs.release_date }}"
           BASE_URL="https://api.github.com/repos/ophub/amlogic-s9xxx-armbian/releases/tags/"
-          
+
           RELEASE_TAGS=(
             "Armbian_noble_save_$RELEASE_DATE"
             "Armbian_jammy_save_$RELEASE_DATE"
@@ -188,13 +188,47 @@ jobs:
             "Armbian_bookworm_save_$RELEASE_DATE"
           )
           
+          URL_LIST=""
           for TAG in "${RELEASE_TAGS[@]}"; do
-            FILE_URL=$(curl -s "$BASE_URL$TAG" | jq -r '.assets[] | select(.name | contains("emb3531")) | .browser_download_url')
+            echo "Processing tag: $TAG"
             
-            if [ -n "$FILE_URL" ]; then
-              aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            CURRENT_URLS=$(curl -s "$BASE_URL$TAG" | jq -r '.assets[] | select(.name | contains("emb3531")) | .browser_download_url' | tr '\n' ';')
+            
+            if [ -n "$CURRENT_URLS" ]; then
+              URL_LIST+="$CURRENT_URLS"
+              echo "Found URLs for $TAG"
             else
               echo "No emb3531 files found for tag $TAG"
+            fi
+          done
+
+          URL_LIST=$(echo "$URL_LIST" | sed 's/^;//;s/;$//;s/;;/;/g')
+          
+          echo "::set-output name=url_list::$URL_LIST"
+
+      - name: Download files from generated URLs
+        id: download_files
+        run: |
+          URL_LIST="${{ steps.generate_urls.outputs.url_list }}"
+
+          URL_COUNT=$(echo "$URL_LIST" | tr ';' '\n' | grep -v '^$' | wc -l)
+          echo "Found $URL_COUNT files to download"
+          
+          if [ -z "$URL_LIST" ]; then
+            echo "No URLs generated for download"
+            exit 1
+          fi
+
+          echo "Download started..."
+          echo "Total URLs: $(echo "$URL_LIST" | tr ';' '\n' | grep -v '^$' | wc -l)"
+          
+          IFS=';'
+          for FILE_URL in $URL_LIST; do
+            if [ -n "$FILE_URL" ]; then
+              echo "Downloading: $FILE_URL"
+              aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            else
+              echo "Skip invalid URL: $FILE_URL"
             fi
           done
 
