@@ -46,7 +46,7 @@ sudo DEBIAN_FRONTEND=noninteractive \
     ${PACKAGES} -y
 
 echo "Installing and setting up repo..."
-sudo curl --create-dirs -L -o /usr/local/bin/repo -O -L https://mirrors.tuna.tsinghua.edu.cn/git/git-repo
+sudo curl --create-dirs -L -o /usr/local/bin/repo -O -L https://gh.65945501.xyz/raw.githubusercontent.com/GerritCodeReview/git-repo/refs/heads/main/repo
 sudo chmod a+rx /usr/local/bin/repo
-echo "export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'" >> ~/.bashrc
+echo "export REPO_URL='https://gh.65945501.xyz/github.com/GerritCodeReview/git-repo'" >> ~/.bashrc
 source ~/.bashrc
