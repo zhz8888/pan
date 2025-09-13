@@ -1,0 +1,32 @@
+# Desktop images with Armbian Linux v6.12
+https://dl.armbian.com/orangepione/Bookworm_current_xfce
+https://dl.armbian.com/orangepione/Bookworm_current_xfce.torrent
+https://dl.armbian.com/orangepione/Bookworm_current_xfce.sha
+https://dl.armbian.com/orangepione/Bookworm_current_xfce.asc
+
+https://dl.armbian.com/orangepione/Noble_current_xfce
+https://dl.armbian.com/orangepione/Noble_current_xfce.torrent
+https://dl.armbian.com/orangepione/Noble_current_xfce.sha
+https://dl.armbian.com/orangepione/Noble_current_xfce.asc
+
+# Minimal/IOT images with Armbian Linux v6.12
+https://dl.armbian.com/orangepione/Bookworm_current_minimal
+https://dl.armbian.com/orangepione/Bookworm_current_minimal.torrent
+https://dl.armbian.com/orangepione/Bookworm_current_minimal.sha
+https://dl.armbian.com/orangepione/Bookworm_current_minimal.asc
+
+https://dl.armbian.com/orangepione/Noble_current_minimal
+https://dl.armbian.com/orangepione/Noble_current_minimal.torrent
+https://dl.armbian.com/orangepione/Noble_current_minimal.sha
+https://dl.armbian.com/orangepione/Noble_current_minimal.asc
+
+https://dl.armbian.com/orangepione/Trixie_current_minimal
+https://dl.armbian.com/orangepione/Trixie_current_minimal.torrent
+https://dl.armbian.com/orangepione/Trixie_current_minimal.sha
+https://dl.armbian.com/orangepione/Trixie_current_minimal.asc
+
+# Server images with Armbian Linux v6.12
+https://dl.armbian.com/orangepione/Noble_current_server
+https://dl.armbian.com/orangepione/Noble_current_server.torrent
+https://dl.armbian.com/orangepione/Noble_current_server.sha
+https://dl.armbian.com/orangepione/Noble_current_server.asc

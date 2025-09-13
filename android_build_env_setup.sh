@@ -45,7 +45,7 @@ sudo DEBIAN_FRONTEND=noninteractive \
     libxml-simple-perl libswitch-perl apt-utils jq \
     ${PACKAGES} -y
 
-echo "Installing and setting up repo..."
+echo "Installing repo..."
 sudo curl --create-dirs -L -o /usr/local/bin/repo -O -L https://mirrors.tuna.tsinghua.edu.cn/git/git-repo
 sudo chmod a+rx /usr/local/bin/repo
 echo "export REPO_URL='https://mirrors.tuna.tsinghua.edu.cn/git/git-repo'" >> ~/.bashrc

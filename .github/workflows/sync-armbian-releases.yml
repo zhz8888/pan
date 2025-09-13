@@ -11,6 +11,7 @@ permissions:
 jobs:
   sync_rock-3c:
     runs-on: ubuntu-latest
+    if: always()
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,8 +19,7 @@ jobs:
       - name: Get latest release info from armbian/community
         id: get_release
         run: |
-          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/community/releases/latest)
-          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Rock-3c_")) | .browser_download_url' | tr '\n' ';')
+          ASSETS=$(curl -s https://api.github.com/repos/armbian/community/releases/latest | jq -r '.assets[] | select(.name | contains("_Rock-3c_")) | .browser_download_url' | tr '\n' ';')
           echo "::set-output name=assets::$ASSETS"
       
       - name: Download Rock-3C files
@@ -27,7 +27,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
       
       - name: Get Radxa-ROCK-3C-Armbian release ID and delete all files
@@ -102,7 +102,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
       
       - name: Get OrangePi-3B-Armbian release ID and delete all files
@@ -236,7 +236,7 @@ jobs:
           for FILE_URL in $URL_LIST; do
             if [ -n "$FILE_URL" ]; then
               echo "Downloading: $FILE_URL"
-              aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+              aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
             else
               echo "Skip invalid URL: $FILE_URL"
             fi
@@ -314,7 +314,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
       
       - name: Get OrangePi-Zero-Armbian release ID and delete all files
@@ -389,7 +389,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
       
       - name: Get OneCloud-Armbian release ID and delete all files
@@ -464,7 +464,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
       
       - name: Get NanoPC-T4-Armbian release ID and delete all files
@@ -539,7 +539,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
       
       - name: Get Radxa-Cubie-A5E-Armbian release ID and delete all files
@@ -614,7 +614,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
       
       - name: Get NanoPi-NEO4-Armbian release ID and delete all files
@@ -689,7 +689,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
       
       - name: Get NanoPi-M4-Armbian release ID and delete all files
@@ -764,7 +764,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
       
       - name: Get OrangePi-Zero3-Armbian release ID and delete all files
@@ -834,14 +834,25 @@ jobs:
           ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Nanopik2-s905_")) | .browser_download_url' | tr '\n' ';')
           echo "::set-output name=assets::$ASSETS"
       
-      - name: Download NanoPi-K2 files
+      - name: Download NanoPi-K2 files from armbian/community
         run: |
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
-      
+
+      - name: Download NanoPi-K2 files from dl-link/nanopi-k2.txt
+        run: |
+          DOWNLOAD_URLS=$(grep -E '^https?://' ${{ github.workspace }}/dl-link/nanopi-k2.txt)
+          
+          while IFS= read -r URL; do
+            if [[ -n "$URL" ]]; then
+              echo "Downloading: $URL"
+              aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$URL"
+            fi
+          done <<< "$DOWNLOAD_URLS"
+
       - name: Get NanoPi-K2-Armbian release ID and delete all files
         id: get_orangepi_release_id
         run: |
@@ -880,14 +891,14 @@ jobs:
             ## Armbian Image Verification
             - sha256sum
 
-            Download from https://github.com/armbian/community/releases
+            Download from https://github.com/armbian/community/releases and https://www.armbian.com/nanopi-k2
           EOF
 
       - name: Upload downloaded files to NanoPi-K2-Armbian release
         uses: softprops/action-gh-release@v2.2.1
         with:
           tag_name: NanoPi-K2-Armbian
-          files: '*Nanopik2*'
+          files: '*Nanopik2-s905*'
           body_path: Release.md
           make_latest: false
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -902,20 +913,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Get latest release info from armbian/os
-        id: get_release
-        run: |
-          RELEASE_INFO=$(curl -s https://api.github.com/repos/armbian/os/releases/latest)
-          ASSETS=$(echo $RELEASE_INFO | jq -r '.assets[] | select(.name | contains("_Orangepione_")) | .browser_download_url' | tr '\n' ';')
-          echo "::set-output name=assets::$ASSETS"
-      
       - name: Download OrangePi-One files
         run: |
-          ASSETS="${{ steps.get_release.outputs.assets }}"
-          IFS=';'
-          for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
-          done
+          DOWNLOAD_URLS=$(grep -E '^https?://' ${{ github.workspace }}/dl-link/orangepi-one.txt)
+          
+          while IFS= read -r URL; do
+            if [[ -n "$URL" ]]; then
+              echo "Downloading: $URL"
+              aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$URL"
+            fi
+          done <<< "$DOWNLOAD_URLS"
       
       - name: Get OrangePi-One-Armbian release ID and delete all files
         id: get_orangepi_release_id
@@ -955,7 +962,7 @@ jobs:
             ## Armbian Image Verification
             - sha256sum
 
-            Download from https://github.com/armbian/os/releases
+            Download from https://www.armbian.com/orange-pi-one
           EOF
 
       - name: Upload downloaded files to OrangePi-One-Armbian release
@@ -989,7 +996,7 @@ jobs:
           ASSETS="${{ steps.get_release.outputs.assets }}"
           IFS=';'
           for FILE_URL in $ASSETS; do
-            aria2c --conf-path=${{ github.workspace }}/aria2.conf "$FILE_URL"
+            aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$FILE_URL"
           done
       
       - name: Get OrangePi-Zero2-Armbian release ID and delete all files
@@ -1038,6 +1045,219 @@ jobs:
         with:
           tag_name: OrangePi-Zero2-Armbian
           files: '*Orangepizero2*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_khadas-vim1:
+    runs-on: ubuntu-latest
+    needs: sync_orangepi-zero2
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download Khadas-VIM1 files
+        run: |
+          DOWNLOAD_URLS=$(grep -E '^https?://' ${{ github.workspace }}/dl-link/khadas-vim1.txt)
+          
+          while IFS= read -r URL; do
+            if [[ -n "$URL" ]]; then
+              echo "Downloading: $URL"
+              aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$URL"
+            fi
+          done <<< "$DOWNLOAD_URLS"
+      
+      - name: Get Khadas-VIM1-Armbian release ID and delete all files
+        id: get_khadas_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/Khadas-VIM1-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release Khadas-VIM1-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: \`root\`
+            - Default password: \`1234\`
+            - Install command: \`armbian-install\`
+            - Update command: \`armbian-update\`
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from https://www.armbian.com/khadas-vim1
+          EOF
+
+      - name: Upload downloaded files to Khadas-VIM1-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: Khadas-VIM1-Armbian
+          files: '*Khadas-vim1*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_khadas-edge2:
+    runs-on: ubuntu-latest
+    needs: sync_khadas-vim1
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download Khadas-Edge2 files
+        run: |
+          DOWNLOAD_URLS=$(grep -E '^https?://' ${{ github.workspace }}/dl-link/khadas-edge2.txt)
+          
+          while IFS= read -r URL; do
+            if [[ -n "$URL" ]]; then
+              echo "Downloading: $URL"
+              aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$URL"
+            fi
+          done <<< "$DOWNLOAD_URLS"
+      
+      - name: Get Khadas-Edge2-Armbian release ID and delete all files
+        id: get_khadas_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/Khadas-Edge2-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release Khadas-Edge2-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: \`root\`
+            - Default password: \`1234\`
+            - Install command: \`armbian-install\`
+            - Update command: \`armbian-update\`
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from https://www.armbian.com/khadas-edge2
+          EOF
+
+      - name: Upload downloaded files to Khadas-Edge2-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: Khadas-Edge2-Armbian
+          files: '*Khadas-edge2*'
+          body_path: Release.md
+          make_latest: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  sync_khadas-vim3:
+    runs-on: ubuntu-latest
+    needs: sync_khadas-edge2
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download Khadas-VIM3 files
+        run: |
+          DOWNLOAD_URLS=$(grep -E '^https?://' ${{ github.workspace }}/dl-link/khadas-vim3.txt)
+          
+          while IFS= read -r URL; do
+            if [[ -n "$URL" ]]; then
+              echo "Downloading: $URL"
+              aria2c --conf-path=${{ github.workspace }}/config/aria2.conf "$URL"
+            fi
+          done <<< "$DOWNLOAD_URLS"
+      
+      - name: Get Khadas-VIM3-Armbian release ID and delete all files
+        id: get_khadas_release_id
+        run: |
+          ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/Khadas-VIM3-Armbian | jq -r '.assets[].id')
+
+          if [ -z "$ASSETS" ]; then
+            echo "No assets found for release Khadas-VIM3-Armbian."
+            exit 1
+          fi
+
+          for ASSET_ID in $ASSETS; do
+            RESPONSE=$(curl -L \
+              -X DELETE \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Accept: application/vnd.github+json" \
+              -w "%{http_code}" -o /dev/null \
+              https://api.github.com/repos/${{ github.repository }}/releases/assets/$ASSET_ID)
+            
+            if [ "$RESPONSE" != "204" ]; then
+              echo "Failed to delete asset with ID $ASSET_ID. Response status: $RESPONSE"
+              exit 1
+            else
+              echo "Successfully deleted asset with ID $ASSET_ID."
+            fi
+          done
+
+      - name: Prepare release note content
+        run: |
+          cat <<EOF | sed -E 's/^  //' > Release.md
+            ## Armbian Image information
+            - Default username: \`root\`
+            - Default password: \`1234\`
+            - Install command: \`armbian-install\`
+            - Update command: \`armbian-update\`
+
+            ## Armbian Image Verification
+            - sha256sum
+
+            Download from https://www.armbian.com/khadas-vim3
+          EOF
+
+      - name: Upload downloaded files to Khadas-VIM3-Armbian release
+        uses: softprops/action-gh-release@v2.2.1
+        with:
+          tag_name: Khadas-VIM3-Armbian
+          files: '*Khadas-vim3*'
           body_path: Release.md
           make_latest: false
           token: ${{ secrets.GITHUB_TOKEN }}
